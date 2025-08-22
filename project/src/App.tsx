@@ -17,6 +17,7 @@ import HowItWorks from './pages/HowItWorks';
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import Profile from './pages/customer/Profile';
+import RepaymentSchedule from './pages/customer/RepaymentSchedule';
 
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
@@ -56,6 +57,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+       path="/repayment-schedule/:loanId"
+      element={
+    <ProtectedRoute requiredRole="customer">
+      <RepaymentSchedule />
+    </ProtectedRoute>
+  }
+/>
               <Route
          path="/profile"
                element={

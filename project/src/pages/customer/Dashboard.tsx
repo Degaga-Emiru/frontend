@@ -1,12 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, DollarSign, Calendar, TrendingUp, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLoan } from '../../contexts/LoanContext';
+import RepaymentModal from '../../components/RepaymentModal'; // Import the RepaymentModal
+
+// Define the LoanApplication type
+type LoanApplication = {
+  id: string;
+  purpose: string;
+  amount: number;
+  duration: number;
+  emi: number;
+  status: string;
+  appliedDate: string;
+  customerId: string;
+  customerName: string;
+  accountNumber: string;
+  interestRate: number;
+  reason?: string;
+};
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { getCustomerApplications } = useLoan();
+  const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
+  const [isRepayModalOpen, setIsRepayModalOpen] = useState(false);
 
   const applications = user ? getCustomerApplications(user.id) : [];
   const activeLoans = applications.filter(app => app.status === 'approved');
@@ -19,6 +38,16 @@ const Dashboard: React.FC = () => {
       case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-yellow-100 text-yellow-800';
     }
+  };
+
+  const handleRepayClick = (loan: LoanApplication) => {
+    setSelectedLoan(loan);
+    setIsRepayModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsRepayModalOpen(false);
+    setSelectedLoan(null);
   };
 
   return (
@@ -96,9 +125,14 @@ const Dashboard: React.FC = () => {
                 <span>Verify Bank Account</span>
               </Link>
             )}
-            <button className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors">
-              View Payment History
-            </button>
+            {activeLoans.length > 0 && (
+              <Link
+                to={`/repayment-schedule/${activeLoans[0].id}`}
+                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
+              >
+                View Payment Schedule
+              </Link>
+            )}
           </div>
         </div>
 
@@ -186,9 +220,20 @@ const Dashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         {application.status === 'approved' && (
-                          <button className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors">
+                          <button 
+                            onClick={() => handleRepayClick(application)}
+                            className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors"
+                          >
                             Repay
                           </button>
+                        )}
+                        {application.status === 'approved' && (
+                          <Link
+                            to={`/repayment-schedule/${application.id}`}
+                            className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
+                          >
+                            Schedule
+                          </Link>
                         )}
                       </td>
                     </tr>
@@ -199,6 +244,15 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Use the external RepaymentModal component */}
+      {selectedLoan && (
+        <RepaymentModal
+          isOpen={isRepayModalOpen}
+          onClose={closeModal}
+          loan={selectedLoan}
+        />
+      )}
     </div>
   );
 };
